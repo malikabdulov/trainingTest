@@ -180,12 +180,13 @@ def get_report(test_id):
     query = (
         "SELECT DATE(ta.created_at) date, u.student_name "
         ", SUM(CASE WHEN tqv.is_right_variant = 'Y' THEN 1 ELSE 0 END) right_answers "
+        ", SUM(CASE WHEN tqv.is_right_variant = 'N' THEN 1 ELSE 0 END) incorrect_answers "
         "FROM test_answers ta "
         "JOIN users u ON u.id = ta.student_id "
         "JOIN test_question_variants tqv ON ta.variant_id = tqv.id "
         "JOIN test_questions tq ON tq.id = tqv.test_question_id "
         f"AND tq.test_id = {test_id} "
-        "GROUP BY 1, 2 "
+        "GROUP BY 2, 1 "
     )
     try:
         cursor.execute(query)
@@ -230,7 +231,7 @@ def export_report(test_id):
             column_index += 1
         row_index += 1
 
-    worksheet.set_column('A:C', 20)
+    worksheet.set_column('A:D', 20)
 
     print(str(row_index) + ' rows written successfully to ' + workbook.filename)
 
@@ -293,9 +294,32 @@ def check_first_answer_time(test_id, telegram_id):
         close_db_connection(cnx, cursor)
 
 
+def is_answer_right(var_id):
+    cnx = create_db_connection()
+    cursor = cnx.cursor()
+    query = (
+        "SELECT is_right_variant "
+        "FROM test_question_variants "
+        f"WHERE id = {var_id} "
+    )
+    try:
+        cursor.execute(query)
+        output = cursor.fetchone()
+        if output[0] == 'Y':
+            return True
+        else:
+            return False
+    except Error as e:
+        print(cursor.statement())
+        print(f"def is_answer_right:::Error '{e}' occurred")
+        return False
+    finally:
+        close_db_connection(cnx, cursor)
+
+
 if __name__ == '__main__':
-    import datetime
-    r = check_first_answer_time(1, 413974882)
-    diff = datetime.datetime.now() - r
-    print(diff.seconds/60)
+
+    r = is_answer_right(3)
+
+    print(r)
 

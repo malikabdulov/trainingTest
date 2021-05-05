@@ -78,7 +78,12 @@ def answer_handler(call):
     var_id = int(pattern[0])
     row_num = int(pattern[1])
     test_id = int(pattern[2])
-    text = call.message.text + '\n*ANSWERED*'
+    is_answer_right = sql.is_answer_right(var_id)
+    if is_answer_right:
+        answer_state = 'Ответ верный'
+    else:
+        answer_state = 'Ответ неверный'
+    text = f'{call.message.text} \n*{answer_state}*'
     bot.edit_message_text(message_id=msg_id, chat_id=chat_id, text=text)
     sql.set_answer(telegram_id, var_id)
     send_questions(call.message, test_id, row_num+1)
